@@ -2,7 +2,7 @@
 =================================================================
     Author: Eric W
 
-    This programe scraps the IMDb website 
+    This program scraps the IMDb website 
     https://www.imdb.com/showtimes/
     for cinemas and movie show time infomation within a region.
 
@@ -65,19 +65,18 @@ var fs = require('fs');
 
 const COUNTRY = "AU"
 const ZIP = "3003"
-const YEAR = "2019"
-const MONTH = "12"
-const DAY = "29"
+const DATE = "2020-01-04"
+
 const RADIUS = "10"
 const FILE_OUT = "cinemaData.json"
-const URL = `https://www.imdb.com/showtimes/${COUNTRY}/${ZIP}/${YEAR}-${MONTH}-${DAY}?ref_=sh_dt`
+const URL = `https://www.imdb.com/showtimes/${COUNTRY}/${ZIP}/${DATE}?ref_=sh_dt`
 
 const cinemaData = new Object()
 
 cinemaData.country = COUNTRY
 cinemaData.zip = ZIP
 cinemaData.radius = RADIUS
-cinemaData.date = YEAR+"-"+MONTH+"-"+DAY
+cinemaData.date = DATE
 cinemaData.cinemaArr = []
 
 var options = {
@@ -129,22 +128,30 @@ rp(options).then(function(res){
                                         .replace(/\s/g,"")
                                         .split("|")
                                         
-                // adding a time suffix for every showtime
-                var timeSuffix = "am"
+                // change the showtime to 24 hours format
+                var timeAdd = 0
                 for (var i=0; i<movie.showtime.length; i++){
 
                     movie.showtime[i] = movie.showtime[i].trim()
                     var suffix = movie.showtime[i].slice(-2)
-
+                    
+                    
                     if( suffix === "pm" ){
-                        timeSuffix = "pm"
+                        timeAdd = 12
+                        
+                        movie.showtime[i] = movie.showtime[i].slice(0, movie.showtime[i].length-2)
+
                     }
                     else if( suffix === "am" ){
-                        timeSuffix = "am"
+                        timeAdd = 0
+                        movie.showtime[i] = movie.showtime[i].slice(0, movie.showtime[i].length-2)
                     }
-                    else{
-                        movie.showtime[i] = movie.showtime[i] + timeSuffix
-                    }
+                    movie.showtime[i] = (parseInt(movie.showtime[i].slice(0,2))%12
+                                            + timeAdd) + movie.showtime[i].slice(-3)
+                    
+                    movie.showtime[i] = movie.showtime[i].padStart(5, "0")
+                    
+                    
                 }
                 cinema.movies.push(movie)
             })
